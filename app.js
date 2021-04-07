@@ -2,11 +2,14 @@ const e = require("express")
 const express = require("express")
 const { MongoClient } = require("mongodb")
 const bodyParser = require("body-parser")
+var jwt = require("jsonwebtoken")
+var cors = require("cors")
 
 require("dotenv").config()
 const app = express()
 const port = 3000
 
+app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
@@ -79,6 +82,48 @@ app.post("/updateUser", async (req, res) => {
         }
     } else {
         res.status(400).send("Does not contain proper params")
+    }
+})
+
+app.post("/login", async (req, res) => {
+    const { username, password, token } = req.body
+    console.log("Username", username, "Password", password, "token", token)
+
+    if (token) {
+        try {
+            const result = jwt.verify(JSON.parse(token), "secret")
+            res.status(200).send({ loggedIn: true })
+        } catch (err) {
+            console.log("token not valid")
+        }
+    }
+
+    const client = new MongoClient(uri)
+    try {
+        await client.connect()
+        const database = client.db("closetly")
+        const users = database.collection("users")
+        const checkIfUserExistsQuery = { email: username }
+        const checkIfUserExists = await users.findOne(checkIfUserExistsQuery)
+        if (checkIfUserExists) {
+            console.log(1)
+            if (password === checkIfUserExists.pass) {
+                const newToken = jwt.sign(
+                    { id: checkIfUserExists._id },
+                    "secret",
+                    {
+                        expiresIn: 600,
+                    }
+                )
+                res.status(200).send({ loggedIn: true, createdToken: newToken })
+            } else {
+                res.status(401).send(`FAILED LOGIN!!!! wrong password`)
+            }
+        } else {
+            res.status(200).send(`FAILED LOGIN!!!! user doesnt exist`)
+        }
+    } finally {
+        await client.close()
     }
 })
 
