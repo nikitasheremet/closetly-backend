@@ -4,6 +4,7 @@ const { MongoClient } = require("mongodb")
 const bodyParser = require("body-parser")
 var jwt = require("jsonwebtoken")
 var cors = require("cors")
+const axios = require("axios")
 
 require("dotenv").config()
 const app = express()
@@ -14,6 +15,24 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 const uri = `mongodb+srv://closetlyAdmin:${process.env.DB_PASS}@cluster0.vt6bu.mongodb.net/closetly?retryWrites=true&w=majority&useUnifiedTopology=true`
+
+app.use(function (req, res, next) {
+    if (req.path !== "/login") {
+        const authorizationHeader = req.headers.authorization
+        console.log(authorizationHeader)
+        if (!req.headers.authorization) {
+            return res.status(403).json({ error: "No credentials sent!" })
+        } else {
+            const clientToken = authorizationHeader.split(" ")[1]
+            try {
+                jwt.verify(JSON.parse(clientToken), "secret")
+            } catch (err) {
+                return res.status(403).json({ error: "Credentials invalid" })
+            }
+        }
+    }
+    next()
+})
 
 app.post("/createUser", async (req, res) => {
     const { email, password } = req.body
@@ -112,7 +131,7 @@ app.post("/login", async (req, res) => {
                     { id: checkIfUserExists._id },
                     "secret",
                     {
-                        expiresIn: 600,
+                        expiresIn: 300000,
                     }
                 )
                 res.status(200).send({ loggedIn: true, createdToken: newToken })
@@ -125,6 +144,11 @@ app.post("/login", async (req, res) => {
     } finally {
         await client.close()
     }
+})
+
+app.get("/showPictures", async (req, res) => {
+    const { data } = await axios.get("https://picsum.photos/v2/list?limit=10")
+    res.status(200).json(data)
 })
 
 app.get("/", (req, res) => {
