@@ -32,7 +32,7 @@ app.use(function (req, res, next) {
     }
     next()
 })
-app.post("/saveImage", (req, res) => {
+app.post("/saveImage", async (req, res) => {
     const { description, id } = req.body
     const client = new MongoClient(uri)
     try {
