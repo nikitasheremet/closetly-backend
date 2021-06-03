@@ -32,7 +32,25 @@ app.use(function (req, res, next) {
     }
     next()
 })
-
+app.post("/saveImage", (req, res) => {
+    const { description, id } = req.body
+    const client = new MongoClient(uri)
+    try {
+        await client.connect()
+        const database = client.db("closetly")
+        const images = database.collection("images")
+        let imageDoc = {
+            description,
+        }
+        await images.insertOne(imageDoc)
+        res.status(200).send(`Image Saved`)
+    } catch (err) {
+        console.dir(err)
+        res.status(400).send(`Could not save image  ${err}`)
+    } finally {
+        await client.close()
+    }
+})
 app.post("/createUser", async (req, res) => {
     const { email, password } = req.body
     if (email && password) {
