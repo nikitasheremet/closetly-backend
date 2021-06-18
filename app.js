@@ -18,13 +18,13 @@ const uri = `mongodb+srv://closetlyAdmin:${process.env.DB_PASS}@cluster0.vt6bu.m
 app.use(function (req, res, next) {
     if (req.path !== "/login") {
         const authorizationHeader = req.headers.authorization
-        console.log(authorizationHeader)
         if (!req.headers.authorization) {
             return res.status(403).json({ error: "No credentials sent!" })
         } else {
             const clientToken = authorizationHeader.split(" ")[1]
             try {
-                jwt.verify(JSON.parse(clientToken), "secret")
+                const decoded = jwt.verify(JSON.parse(clientToken), "secret")
+                res.locals.userId = decoded.id
             } catch (err) {
                 return res.status(403).json({ error: "Credentials invalid" })
             }
@@ -33,7 +33,7 @@ app.use(function (req, res, next) {
     next()
 })
 app.post("/saveImage", async (req, res) => {
-    const { description, id } = req.body
+    const { description, name, url } = req.body
     const client = new MongoClient(uri)
     try {
         await client.connect()
@@ -41,6 +41,9 @@ app.post("/saveImage", async (req, res) => {
         const images = database.collection("images")
         let imageDoc = {
             description,
+            name,
+            url,
+            user: res.locals.userId,
         }
         await images.insertOne(imageDoc)
         res.status(200).send(`Image Saved`)
@@ -123,8 +126,6 @@ app.post("/updateUser", async (req, res) => {
 
 app.post("/login", async (req, res) => {
     const { username, password, token } = req.body
-    console.log("Username", username, "Password", password, "token", token)
-
     if (token) {
         try {
             const result = jwt.verify(JSON.parse(token), "secret")
@@ -142,13 +143,12 @@ app.post("/login", async (req, res) => {
         const checkIfUserExistsQuery = { email: username }
         const checkIfUserExists = await users.findOne(checkIfUserExistsQuery)
         if (checkIfUserExists) {
-            console.log(1)
             if (password === checkIfUserExists.pass) {
                 const newToken = jwt.sign(
                     { id: checkIfUserExists._id },
                     "secret",
                     {
-                        expiresIn: 300000,
+                        expiresIn: 30000000,
                     }
                 )
                 res.status(200).send({ loggedIn: true, createdToken: newToken })
