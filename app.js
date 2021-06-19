@@ -164,8 +164,20 @@ app.post("/login", async (req, res) => {
 })
 
 app.get("/showPictures", async (req, res) => {
-    const { data } = await axios.get("https://picsum.photos/v2/list?limit=10")
-    res.status(200).json(data)
+    const client = new MongoClient(uri)
+    try {
+        await client.connect()
+        const database = client.db("closetly")
+        const images = database.collection("images")
+        const foundImages = await images
+            .find({ user: res.locals.userId })
+            .toArray()
+        // console.log(foundImages)
+        foundImages.forEach((doc) => console.log(doc))
+        res.status(200).send(foundImages)
+    } finally {
+        await client.close()
+    }
 })
 
 app.get("/", (req, res) => {
