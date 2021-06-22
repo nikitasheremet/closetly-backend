@@ -124,6 +124,26 @@ app.post("/updateUser", async (req, res) => {
     }
 })
 
+app.delete("/removeImage", async (req, res) => {
+    const { imageId } = req.body
+    const client = new MongoClient(uri)
+    try {
+        await client.connect()
+        const database = client.db("closetly")
+        const images = database.collection("images")
+        let imageDocToFind = {
+            _id: imageId,
+        }
+        await images.deleteOne(imageDocToFind)
+        res.status(200).send(`Image Deleted`)
+    } catch (err) {
+        console.dir(err)
+        res.status(400).send(`Could not delete image  ${err}`)
+    } finally {
+        await client.close()
+    }
+})
+
 app.post("/login", async (req, res) => {
     const { username, password, token } = req.body
     if (token) {
