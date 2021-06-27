@@ -1,5 +1,5 @@
 const express = require("express")
-const { MongoClient } = require("mongodb")
+const { MongoClient, ObjectId } = require("mongodb")
 const bodyParser = require("body-parser")
 var jwt = require("jsonwebtoken")
 var cors = require("cors")
@@ -124,7 +124,7 @@ app.post("/updateUser", async (req, res) => {
     }
 })
 
-app.delete("/removeImage", async (req, res) => {
+app.post("/removeImage", async (req, res) => {
     const { imageId } = req.body
     const client = new MongoClient(uri)
     try {
@@ -132,7 +132,7 @@ app.delete("/removeImage", async (req, res) => {
         const database = client.db("closetly")
         const images = database.collection("images")
         let imageDocToFind = {
-            _id: imageId,
+            _id: ObjectId(imageId),
         }
         await images.deleteOne(imageDocToFind)
         res.status(200).send(`Image Deleted`)
@@ -192,8 +192,6 @@ app.get("/showPictures", async (req, res) => {
         const foundImages = await images
             .find({ user: res.locals.userId })
             .toArray()
-        // console.log(foundImages)
-        foundImages.forEach((doc) => console.log(doc))
         res.status(200).send(foundImages)
     } finally {
         await client.close()
