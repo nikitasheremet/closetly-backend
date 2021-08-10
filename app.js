@@ -125,6 +125,29 @@ app.post("/updateUser", async (req, res) => {
     }
 })
 
+app.post("/updateImage", async (req, res) => {
+    const { _id, ...imageDetails } = req.body
+    const client = new MongoClient(uri)
+    try {
+        await client.connect()
+        const database = client.db("closetly")
+        const images = database.collection("images")
+        let filter = { _id: ObjectId(_id) }
+        let updateDocument = {
+            $set: imageDetails,
+        }
+        console.log(filter, updateDocument)
+        const hello = await images.updateOne(filter, updateDocument)
+        // console.log(hello)
+        res.status(200).send(`Image Updated`)
+    } catch (err) {
+        console.dir(err)
+        res.status(400).send(`Could not update image  ${err}`)
+    } finally {
+        await client.close()
+    }
+})
+
 app.post("/removeImage", async (req, res) => {
     const { imageId } = req.body
     const client = new MongoClient(uri)
