@@ -33,7 +33,7 @@ app.use(function (req, res, next) {
     next()
 })
 app.post("/saveImage", async (req, res) => {
-    const { description, title, name, url } = req.body
+    const { description, title, name, url, tags } = req.body
     const client = new MongoClient(uri)
     try {
         await client.connect()
@@ -45,6 +45,7 @@ app.post("/saveImage", async (req, res) => {
             name,
             url,
             user: res.locals.userId,
+            tags,
         }
         await images.insertOne(imageDoc)
         res.status(200).send(`Image Saved`)
