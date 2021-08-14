@@ -32,6 +32,28 @@ app.use(function (req, res, next) {
     }
     next()
 })
+app.post("/updatePassword", async (req, res) => {
+    const { newPassword } = req.body
+    const client = new MongoClient(uri)
+    try {
+        await client.connect()
+        const database = client.db("closetly")
+        const users = database.collection("users")
+
+        let filter = { _id: ObjectId(res.locals.userId) }
+        let updateDocument = {
+            $set: { pass: newPassword },
+        }
+        await users.updateOne(filter, updateDocument)
+
+        res.status(200).send(`Password Updated`)
+    } catch (err) {
+        console.dir(err)
+        res.status(400).send(`Could not save password  ${err}`)
+    } finally {
+        await client.close()
+    }
+})
 app.post("/saveImage", async (req, res) => {
     const { description, title, name, url, tags } = req.body
     const client = new MongoClient(uri)
