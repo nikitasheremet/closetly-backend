@@ -13,8 +13,6 @@ app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-const uri = `mongodb+srv://closetlyAdmin:${process.env.DB_PASS}@cluster0.vt6bu.mongodb.net/closetly?retryWrites=true&w=majority&useUnifiedTopology=true`
-
 app.use(function (req, res, next) {
     if (req.path !== "/login") {
         const authorizationHeader = req.headers.authorization
