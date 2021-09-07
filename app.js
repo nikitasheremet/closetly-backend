@@ -40,6 +40,8 @@ app.get("/", (req, res) => {
 
 let port = process.env.PORT;
 if (port == null || port == "") {
-  port = 3000;
+  port = 8000;
 }
-app.listen(port);
+app.listen(port, () => {
+    console.log(`App listening on port: ${port}`)
+});
