@@ -33,6 +33,7 @@
         "node": "10.16.0"
     },
     "devDependencies": {
+        "@types/jsonwebtoken": "^8.5.8",
         "@types/mongodb": "^4.0.7",
         "typescript": "^4.7.3"
     }

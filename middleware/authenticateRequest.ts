@@ -1,5 +1,10 @@
 import { NextFunction, Request, Response } from "express"
-import jwt from "jsonwebtoken"
+import * as jwt from "jsonwebtoken"
+import type { JwtPayload } from "jsonwebtoken"
+
+interface DecodedAuthorizationToken extends JwtPayload {
+    id: string
+}
 
 /**
  * Middleware which checks to see if a JWT token was passed in via authorization headers
@@ -26,7 +31,7 @@ const authenticateRequest = (
             const decoded = jwt.verify(
                 JSON.parse(clientToken),
                 process.env.JWT_SECRET
-            )
+            ) as DecodedAuthorizationToken
             res.locals.userId = decoded.id
         } catch (err) {
             res.status(403).json({ error: "Credentials invalid" })

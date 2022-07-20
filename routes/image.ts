@@ -1,12 +1,13 @@
 require("dotenv").config()
 import * as express from "express"
 import { MongoClient, ObjectId } from "mongodb"
+import authenticateRequest from "../middleware/authenticateRequest"
 
 const imageRouter = express.Router()
 
 const uri = `mongodb+srv://closetlyAdmin:${process.env.DB_PASS}@cluster0.vt6bu.mongodb.net/closetly?retryWrites=true&w=majority&useUnifiedTopology=true`
 
-imageRouter.get("/showPictures", async (req, res) => {
+imageRouter.get("/showPictures", authenticateRequest, async (req, res) => {
     const client = new MongoClient(uri)
     try {
         await client.connect()
