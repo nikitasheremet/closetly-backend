@@ -1,12 +1,16 @@
 require("dotenv").config()
-const express = require('express')
-const { MongoClient, ObjectId } = require("mongodb")
+import * as express from "express"
+import { MongoClient, ObjectId } from "mongodb"
+import createCustomToken from "../helpers/createJwtToken"
+import jwt from "jsonwebtoken"
+import authenticateRequest from "../middleware/authenticateRequest"
 
 const userRouter = express.Router()
 
 const uri = `mongodb+srv://closetlyAdmin:${process.env.DB_PASS}@cluster0.vt6bu.mongodb.net/closetly?retryWrites=true&w=majority&useUnifiedTopology=true`
 
-userRouter.post("/updatePassword", async (req, res) => {
+// UPDATE PASSWORD
+userRouter.post("/updatePassword", authenticateRequest, async (req, res) => {
     const { newPassword } = req.body
     const client = new MongoClient(uri)
     try {
@@ -28,6 +32,7 @@ userRouter.post("/updatePassword", async (req, res) => {
         await client.close()
     }
 })
+// CREATE USER
 userRouter.post("/createUser", async (req, res) => {
     const { email, password } = req.body
     if (email && password) {
@@ -48,7 +53,13 @@ userRouter.post("/createUser", async (req, res) => {
                 await users.insertOne(userDoc)
                 const query = { email }
                 const user = await users.findOne(query)
-                res.status(200).send(`User created ${JSON.stringify(user)}`)
+                const newToken = createCustomToken({
+                    payload: { id: user._id },
+                })
+                res.status(200).send({
+                    createdToken: newToken,
+                    message: `User created ${JSON.stringify(user)}`,
+                })
             } else {
                 res.status(400).send(`That email already exists`)
             }
@@ -62,7 +73,8 @@ userRouter.post("/createUser", async (req, res) => {
         res.status(400).send("Does not contain proper params")
     }
 })
-userRouter.post("/updateUser", async (req, res) => {
+// UPDATE USER
+userRouter.post("/updateUser", authenticateRequest, async (req, res) => {
     const { currentEmail, updateObject } = req.body
     if (currentEmail && updateObject) {
         const client = new MongoClient(uri)
@@ -96,11 +108,12 @@ userRouter.post("/updateUser", async (req, res) => {
         res.status(400).send("Does not contain proper params")
     }
 })
+// LOGIN
 userRouter.post("/login", async (req, res) => {
     const { username, password, token } = req.body
     if (token) {
         try {
-            const result = jwt.verify(JSON.parse(token), "secret")
+            jwt.verify(JSON.parse(token), "secret")
             res.status(200).send({ loggedIn: true })
         } catch (err) {
             console.log("token not valid")
@@ -116,13 +129,9 @@ userRouter.post("/login", async (req, res) => {
         const checkIfUserExists = await users.findOne(checkIfUserExistsQuery)
         if (checkIfUserExists) {
             if (password === checkIfUserExists.pass) {
-                const newToken = jwt.sign(
-                    { id: checkIfUserExists._id },
-                    "secret",
-                    {
-                        expiresIn: 30000000,
-                    }
-                )
+                const newToken = createCustomToken({
+                    payload: { id: checkIfUserExists._id },
+                })
                 res.status(200).send({ loggedIn: true, createdToken: newToken })
             } else {
                 res.status(401).send(`FAILED LOGIN!!!! wrong password`)
@@ -135,4 +144,4 @@ userRouter.post("/login", async (req, res) => {
     }
 })
 
-module.exports = userRouter
+export default userRouter

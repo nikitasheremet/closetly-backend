@@ -1,6 +1,6 @@
 require("dotenv").config()
-const express = require('express')
-const { MongoClient, ObjectId } = require("mongodb")
+import * as express from "express"
+import { MongoClient, ObjectId } from "mongodb"
 
 const imageRouter = express.Router()
 
@@ -89,4 +89,4 @@ imageRouter.post("/saveImage", async (req, res) => {
     }
 })
 
-module.exports = imageRouter
+export default imageRouter
