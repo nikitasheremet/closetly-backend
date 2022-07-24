@@ -4,6 +4,7 @@ import { MongoClient, ObjectId } from "mongodb"
 import createCustomToken from "../helpers/createJwtToken"
 import jwt from "jsonwebtoken"
 import authenticateRequest from "../middleware/authenticateRequest"
+import extractAuthorizationToken from "../helpers/extractAuthorizationToken"
 
 const userRouter = express.Router()
 
@@ -110,7 +111,8 @@ userRouter.post("/updateUser", authenticateRequest, async (req, res) => {
 })
 // LOGIN
 userRouter.post("/login", async (req, res) => {
-    const { username, password, token } = req.body
+    const { username, password } = req.body
+    const token = extractAuthorizationToken(req)
     if (token) {
         try {
             jwt.verify(JSON.parse(token), "secret")
@@ -139,6 +141,9 @@ userRouter.post("/login", async (req, res) => {
         } else {
             res.status(200).send(`FAILED LOGIN!!!! user doesnt exist`)
         }
+    } catch (err) {
+        console.log(err)
+        res.status(500).send(err)
     } finally {
         await client.close()
     }

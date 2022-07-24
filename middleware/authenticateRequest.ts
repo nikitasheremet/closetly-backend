@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import * as jwt from "jsonwebtoken"
 import type { JwtPayload } from "jsonwebtoken"
+import extractAuthorizationToken from "../helpers/extractAuthorizationToken"
 
 interface DecodedAuthorizationToken extends JwtPayload {
     id: string
@@ -21,15 +22,13 @@ const authenticateRequest = (
     res: Response,
     next: NextFunction
 ): void => {
-    const authorizationHeader = req.headers.authorization
-    if (!req.headers.authorization) {
+    const authorizationHeaderToken = extractAuthorizationToken(req)
+    if (!authorizationHeaderToken) {
         res.status(403).json({ error: "No credentials sent!" })
     } else {
-        console.log(authorizationHeader.split(" "))
-        const clientToken = authorizationHeader.split(" ")[1]
         try {
             const decoded = jwt.verify(
-                JSON.parse(clientToken),
+                JSON.parse(authorizationHeaderToken),
                 process.env.JWT_SECRET
             ) as DecodedAuthorizationToken
             res.locals.userId = decoded.id
