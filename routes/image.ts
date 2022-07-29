@@ -39,11 +39,27 @@ imageRouter.post("/removeImage", async (req, res) => {
         let imageDocToFind = {
             _id: ObjectId(imageId),
         }
+        // Remove image from db
         await images.deleteOne(imageDocToFind)
-        res.status(200).send(`Image Deleted`)
+        try {
+            const cloudinaryImageUploadOptions = {
+                invalidate: true,
+            }
+            // Remove image from cloudinary
+            await cloudinary.uploader.destroy(
+                imageId,
+                cloudinaryImageUploadOptions
+            )
+            res.status(200).send({ _id: imageId, message: "Image Deleted" })
+        } catch (err) {
+            const errorMessage = `Could not delete image from cloudinary with public_id: ${imageId}. Error: ${err}`
+            console.log(errorMessage)
+            res.status(500).send(errorMessage)
+        }
     } catch (err) {
-        console.dir(err)
-        res.status(400).send(`Could not delete image  ${err}`)
+        const errorMessage = `Could not delete image from db with _id: ${imageId}. Error is: ${err}`
+        console.dir(errorMessage)
+        res.status(500).send(errorMessage)
     } finally {
         await client.close()
     }
@@ -61,7 +77,8 @@ imageRouter.post("/updateImage", async (req, res) => {
             $set: imageDetails,
         }
         console.log(filter, updateDocument)
-        const hello = await images.updateOne(filter, updateDocument)
+        await images.updateOne(filter, updateDocument)
+
         // console.log(hello)
         res.status(200).send(`Image Updated`)
     } catch (err) {
