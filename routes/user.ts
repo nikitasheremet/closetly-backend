@@ -111,14 +111,15 @@ userRouter.post("/updateUser", authenticateRequest, async (req, res) => {
 })
 // LOGIN
 userRouter.post("/login", async (req, res) => {
-    const { username, password } = req.body
+    console.log("11")
+    const { email, password } = req.body
     const token = extractAuthorizationToken(req)
     if (token) {
         try {
             jwt.verify(JSON.parse(token), "secret")
             res.status(200).send({ loggedIn: true })
         } catch (err) {
-            console.log("token not valid")
+            console.log("token not valid", token)
         }
     }
 
@@ -127,7 +128,8 @@ userRouter.post("/login", async (req, res) => {
         await client.connect()
         const database = client.db("closetly")
         const users = database.collection("users")
-        const checkIfUserExistsQuery = { email: username }
+        const checkIfUserExistsQuery = { email: email.toLowerCase() }
+        console.log("ffff", checkIfUserExistsQuery)
         const checkIfUserExists = await users.findOne(checkIfUserExistsQuery)
         if (checkIfUserExists) {
             if (password === checkIfUserExists.pass) {
